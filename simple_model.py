@@ -80,29 +80,33 @@ def Objective(trial: optuna.Trial) -> float:
    # Test 
    accuracy = model.test(data=test_data, device=device) 
 
+   return accuracy
+
 
 
 if __name__ == "__main__":
 
    # Hyperparameter tuning
-   study = optuna.create_study(direction="maximize")  # Maximize accuracy
-   study.optimize(Objective, n_trials=30)  # Run 30 trials
+   # study = optuna.create_study(direction="maximize")  # Maximize accuracy
+   # study.optimize(Objective, n_trials=50)  # Run 30 trials
 
    # Print best hyperparameters
-   print("Best hyperparameters:", study.best_params)
+   # print("Best hyperparameters:", study.best_params)
 
+
+   # Best hyperparameters: {'num_epochs': 100, 'lr': 0.1, 'batch_size': 64}
 
    # Initalize data
-   # train_data = pd.read_csv('sign_mnist_train.csv').to_numpy(dtype=np.float32)
-   # test_data = pd.read_csv('sign_mnist_test.csv').to_numpy(dtype=np.float32)
+   train_data = pd.read_csv('sign_mnist_train.csv').to_numpy(dtype=np.float32)
+   test_data = pd.read_csv('sign_mnist_test.csv').to_numpy(dtype=np.float32)
 
    # Intialize model
-   # device = torch.device("cude" if torch.cuda.is_available() else "cpu")
-   # model = SoftmaxClassifer(features=784, num_classes=26).to(device)
+   device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+   model = SoftmaxClassifer(features=784, num_classes=26).to(device)
 
    # Train
-   # model.train(train_data, num_epochs=50, lr=1e-1, batch_size=64) 
+   model.train(train_data, num_epochs=100, lr=1e-1, batch_size=64, device=device) 
 
    # # Test 
-   # model.test(test_data)
+   model.test(test_data, device=device)
   
