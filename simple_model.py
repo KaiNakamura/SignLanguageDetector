@@ -16,22 +16,13 @@ class SoftmaxClassifer(nn.Module):
       self.linear = nn.Linear(features, num_classes)
 
 
-   def forward(self, x: float) -> Tensor:
+   def forward(self, x: Tensor) -> Tensor:
       return self.linear(x)
-   
-
-   def preprocess(self, data: np.ndarray, device: torch.device) -> tuple:
-      y = torch.from_numpy(data[:, 0]).long().to(device) # Shape (num_samples,)
-      X = torch.from_numpy(data[:, 1:]).to(device) # Shape (num_samples, num_features)
-
-      X = X / 255 # Normalize X
-      return X, y
 
 
-   def train (self, data: np.ndarray, num_epochs: int, lr: float, batch_size, device: torch.device): 
-      X, y = self.preprocess(data, device)
-      dataset = TensorDataset(X, y)
-      loader = DataLoader(dataset=dataset, batch_size=batch_size)
+   def train_model (self, train_X: np.ndarray, train_y: np.ndarray, num_epochs: int, lr: float, batch_size: int): 
+      dataset = TensorDataset(train_X, train_y)
+      loader = DataLoader(dataset=dataset, batch_size=batch_size, shuffle=True)
 
       loss_fn = nn.CrossEntropyLoss() # CE loss runs softmax function
       optimizer = optim.SGD(self.parameters(), lr=lr)
@@ -48,18 +39,33 @@ class SoftmaxClassifer(nn.Module):
             print(f"Epoch {epoch} / {num_epochs}: {loss.item()}")
    
 
-   def test (self, data: np.ndarray, device: torch.device):
+   def test_model (self, test_X: np.ndarray, test_y: np.ndarray) -> float:
       with torch.no_grad():
-         test_X, test_y = self.preprocess(data, device)
          n = test_y.shape[0]
 
          logits = self.forward(test_X)
          probabilities = torch.softmax(logits, dim=1)
          predicted_classes = torch.argmax(probabilities, dim=1)
+
          accuracy = (test_y == predicted_classes).sum().item() / n
          print(f"Test accuracy: {accuracy}")
          return accuracy
       
+
+def preprocess(data: pd.DataFrame, device: torch.device) -> tuple:
+
+   # In order to fix this subtract all labels by 1 if label is > 9
+   data['label'] = data['label'].apply(lambda x: x - 1 if x > 9 else x)
+
+   # Convert to np
+   data = data.to_numpy(dtype=np.float32)
+   
+   y = torch.from_numpy(data[:, 0]).long().to(device) # Shape (num_samples,)
+   X = torch.from_numpy(data[:, 1:]).to(device) # Shape (num_samples, num_features)
+
+   X = X / 255 # Normalize X
+   return X, y
+
 
 def Objective(trial: optuna.Trial) -> float:
    num_epochs = trial.suggest_categorical("num_epochs", [10, 20, 50, 100])
@@ -67,18 +73,22 @@ def Objective(trial: optuna.Trial) -> float:
    batch_size = trial.suggest_categorical('batch_size', [10, 32, 64, 128, 256])
 
    # Initalize data
-   train_data = pd.read_csv('sign_mnist_train.csv').to_numpy(dtype=np.float32)
-   test_data = pd.read_csv('sign_mnist_test.csv').to_numpy(dtype=np.float32)
+   train_data = pd.read_csv('sign_mnist_train.csv')
+   test_data = pd.read_csv('sign_mnist_test.csv')
+   
+   device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+   train_X, train_y = preprocess(train_data, device)
+   test_X, test_y = preprocess(test_data, device)
 
    # Intialize model
-   device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-   model = SoftmaxClassifer(features=784, num_classes=26).to(device)
+   model = SoftmaxClassifer(features=784, num_classes=24).to(device)
 
    # Train
-   model.train(data=train_data, num_epochs=num_epochs, lr=lr, batch_size=batch_size, device=device) 
+   model.train_model(train_X=train_X, train_y=train_y, num_epochs=num_epochs, lr=lr, batch_size=batch_size) 
 
    # Test 
-   accuracy = model.test(data=test_data, device=device) 
+   accuracy = model.test_model(test_X=test_X, test_y=test_y)
 
    return accuracy
 
@@ -87,26 +97,30 @@ def Objective(trial: optuna.Trial) -> float:
 if __name__ == "__main__":
 
    # Hyperparameter tuning
-   # study = optuna.create_study(direction="maximize")  # Maximize accuracy
-   # study.optimize(Objective, n_trials=50)  # Run 30 trials
+   study = optuna.create_study(direction="maximize")  # Maximize accuracy
+   study.optimize(Objective, n_trials=50)
 
    # Print best hyperparameters
-   # print("Best hyperparameters:", study.best_params)
+   print("Best hyperparameters:", study.best_params)
 
 
    # Best hyperparameters: {'num_epochs': 100, 'lr': 0.1, 'batch_size': 64}
 
    # Initalize data
-   train_data = pd.read_csv('sign_mnist_train.csv').to_numpy(dtype=np.float32)
-   test_data = pd.read_csv('sign_mnist_test.csv').to_numpy(dtype=np.float32)
+   train_data = pd.read_csv('sign_mnist_train.csv')
+   test_data = pd.read_csv('sign_mnist_test.csv')
+   
+   device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # Select use of GPU/CPU
+
+   train_X, train_y = preprocess(train_data, device)
+   test_X, test_y = preprocess(test_data, device)
 
    # Intialize model
-   device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-   model = SoftmaxClassifer(features=784, num_classes=26).to(device)
+   model = SoftmaxClassifer(features=784, num_classes=24).to(device)
 
    # Train
-   model.train(train_data, num_epochs=100, lr=1e-1, batch_size=64, device=device) 
+   model.train_model(train_X=train_X, train_y=train_y, num_epochs=100, lr=1e-1, batch_size=64) 
 
-   # # Test 
-   model.test(test_data, device=device)
+   # Test 
+   model.test_model(test_X=test_X, test_y=test_y)
   
