@@ -20,12 +20,12 @@ class SoftmaxClassifer(nn.Module):
       return self.linear(x)
 
 
-   def train_model (self, train_X: np.ndarray, train_y: np.ndarray, num_epochs: int, lr: float, batch_size: int): 
+   def train_model (self, train_X: np.ndarray, train_y: np.ndarray, num_epochs: int, lr: float, batch_size: int, weight_decay: float = 0.0): 
       dataset = TensorDataset(train_X, train_y)
       loader = DataLoader(dataset=dataset, batch_size=batch_size, shuffle=True)
 
       loss_fn = nn.CrossEntropyLoss() # CE loss runs softmax function
-      optimizer = optim.SGD(self.parameters(), lr=lr)
+      optimizer = optim.SGD(self.parameters(), lr=lr, weight_decay=weight_decay)
 
       for epoch in range(1, num_epochs + 1): 
          for batch_x, batch_y in loader:
@@ -71,6 +71,7 @@ def Objective(trial: optuna.Trial) -> float:
    num_epochs = trial.suggest_categorical("num_epochs", [10, 20, 50, 100])
    lr = trial.suggest_categorical("lr", [1e-1, 1e-2, 1e-3, 1e-4, 1e-5])
    batch_size = trial.suggest_categorical('batch_size', [10, 32, 64, 128, 256])
+   l2 = trial.suggest_categorical('L2', [1e-1, 1e-2, 1e-3, 1e-4, 1e-5])
 
    # Initalize data
    train_data = pd.read_csv('sign_mnist_train.csv')
@@ -85,7 +86,7 @@ def Objective(trial: optuna.Trial) -> float:
    model = SoftmaxClassifer(features=784, num_classes=24).to(device)
 
    # Train
-   model.train_model(train_X=train_X, train_y=train_y, num_epochs=num_epochs, lr=lr, batch_size=batch_size) 
+   model.train_model(train_X=train_X, train_y=train_y, num_epochs=num_epochs, lr=lr, batch_size=batch_size, weight_decay=l2) 
 
    # Test 
    accuracy = model.test_model(test_X=test_X, test_y=test_y)
@@ -119,7 +120,7 @@ if __name__ == "__main__":
    model = SoftmaxClassifer(features=784, num_classes=24).to(device)
 
    # Train
-   model.train_model(train_X=train_X, train_y=train_y, num_epochs=100, lr=0.01, batch_size=10) 
+   model.train_model(train_X=train_X, train_y=train_y, num_epochs=100, lr=0.01, batch_size=10, weight_decay=0.01) 
 
    # Test 
    model.test_model(test_X=test_X, test_y=test_y)
