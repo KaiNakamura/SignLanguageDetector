@@ -104,7 +104,7 @@ if __name__ == "__main__":
    print("Best hyperparameters:", study.best_params)
 
 
-   # Best hyperparameters: {'num_epochs': 100, 'lr': 0.1, 'batch_size': 64}
+   # Best hyperparameters: {'num_epochs': 100, 'lr': 0.01, 'batch_size': 10}
 
    # # Initalize data
    train_data = pd.read_csv('sign_mnist_train.csv')
