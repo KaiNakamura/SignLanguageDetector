@@ -106,7 +106,7 @@ if __name__ == "__main__":
 
    # Best hyperparameters: {'num_epochs': 100, 'lr': 0.1, 'batch_size': 64}
 
-   # Initalize data
+   # # Initalize data
    train_data = pd.read_csv('sign_mnist_train.csv')
    test_data = pd.read_csv('sign_mnist_test.csv')
    
@@ -119,7 +119,7 @@ if __name__ == "__main__":
    model = SoftmaxClassifer(features=784, num_classes=24).to(device)
 
    # Train
-   model.train_model(train_X=train_X, train_y=train_y, num_epochs=100, lr=1e-1, batch_size=64) 
+   model.train_model(train_X=train_X, train_y=train_y, num_epochs=100, lr=0.01, batch_size=10) 
 
    # Test 
    model.test_model(test_X=test_X, test_y=test_y)
