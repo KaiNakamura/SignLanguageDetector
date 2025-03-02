@@ -93,7 +93,7 @@ def Objective(trial: optuna.Trial) -> float:
    model.train_model(train_X=train_X, train_y=train_y, num_epochs=num_epochs, lr=lr, batch_size=batch_size, weight_decay=l2) 
 
    # Test 
-   accuracy = model.test_model(test_X=test_X, test_y=test_y)
+   accuracy, _ = model.test_model(test_X=test_X, test_y=test_y)
 
    return accuracy
 
