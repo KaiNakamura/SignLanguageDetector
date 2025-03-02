@@ -48,7 +48,8 @@ class SoftmaxClassifer(nn.Module):
          predicted_classes = torch.argmax(probabilities, dim=1)
 
          accuracy = (test_y == predicted_classes).sum().item() / n
-         loss = nn.CrossEntropyLoss(logits, test_y)
+         loss_fn = nn.CrossEntropyLoss()
+         loss = loss_fn(logits, test_y)
 
          print(f"Test accuracy: {accuracy}")
          print(f"Test loss: {loss}")
