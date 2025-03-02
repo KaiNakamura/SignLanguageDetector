@@ -75,7 +75,7 @@ def Objective(trial: optuna.Trial) -> float:
    num_epochs = trial.suggest_categorical("num_epochs", [10, 20, 50, 100])
    lr = trial.suggest_categorical("lr", [1e-1, 1e-2, 1e-3, 1e-4, 1e-5])
    batch_size = trial.suggest_categorical('batch_size', [10, 32, 64, 128, 256])
-   l2 = trial.suggest_categorical('L2', [1e-1, 1e-2, 1e-3, 1e-4, 1e-5])
+   l2 = trial.suggest_categorical('L2', [0.1, 1, 2, 3, 4, 6, 8])
 
    # Initalize data
    train_data = pd.read_csv('sign_mnist_train.csv')
