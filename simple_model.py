@@ -48,8 +48,11 @@ class SoftmaxClassifer(nn.Module):
          predicted_classes = torch.argmax(probabilities, dim=1)
 
          accuracy = (test_y == predicted_classes).sum().item() / n
+         loss = nn.CrossEntropyLoss(logits, test_y)
+
          print(f"Test accuracy: {accuracy}")
-         return accuracy
+         print(f"Test loss: {loss}")
+         return accuracy, loss
       
 
 def preprocess(data: pd.DataFrame, device: torch.device) -> tuple:
@@ -105,7 +108,8 @@ if __name__ == "__main__":
    print("Best hyperparameters:", study.best_params)
 
 
-   # Best hyperparameters: {'num_epochs': 100, 'lr': 0.1, 'batch_size': 64}
+   # Without regularization Best hyperparameters: {'num_epochs': 100, 'lr': 0.1, 'batch_size': 64}
+   # With Regularization: Best hyperparameters: {'num_epochs': 50, 'lr': 0.1, 'batch_size': 10, 'L2': 1e-05}
 
    # # Initalize data
    train_data = pd.read_csv('sign_mnist_train.csv')
@@ -120,7 +124,7 @@ if __name__ == "__main__":
    model = SoftmaxClassifer(features=784, num_classes=24).to(device)
 
    # Train
-   model.train_model(train_X=train_X, train_y=train_y, num_epochs=100, lr=0.01, batch_size=10, weight_decay=0.01) 
+   model.train_model(train_X=train_X, train_y=train_y, num_epochs=50, lr=0.1, batch_size=10, weight_decay=1e-05) 
 
    # Test 
    model.test_model(test_X=test_X, test_y=test_y)
