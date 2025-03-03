@@ -26,18 +26,19 @@ class ConvolutionalNeuralNetwork(nn.Module):
          nn.MaxPool2d(kernel_size=2, stride=2) 
       )
       self.dense_layer = nn.Sequential(
-         nn.Linear(64 * 4 * 4, num_dense_nodes),
+         nn.Linear(64 * 3 * 3, num_dense_nodes),
          nn.Dropout(0.5),
          nn.Linear(num_dense_nodes, num_classes)
       )
 
 
-   def forward(self, X: np.ndarray): 
+   def forward(self, X: Tensor) -> Tensor: 
       X = self.conv_layer(X)
+      X = torch.flatten(X, start_dim=1)
       return self.dense_layer(X)
    
 
-   def train_model(self, train_X: np.ndarray, train_y: np.ndarray, num_epochs: int, lr: float, batch_size: int):
+   def train_model(self, train_X: Tensor, train_y: Tensor, num_epochs: int, lr: float, batch_size: int):
       dataset = TensorDataset(train_X, train_y)
       loader = DataLoader(dataset=dataset, batch_size=batch_size, shuffle=True)
 
@@ -56,7 +57,7 @@ class ConvolutionalNeuralNetwork(nn.Module):
             print(f"Epoch {epoch} / {num_epochs}: {loss.item()}")
    
    
-   def test_model (self, test_X: np.ndarray, test_y: np.ndarray) -> float:
+   def test_model (self, test_X: Tensor, test_y: Tensor) -> float:
       with torch.no_grad():
          n = test_y.shape[0]
 
@@ -80,9 +81,60 @@ def preprocess(data: pd.DataFrame, device: torch.device) -> tuple:
    y = torch.from_numpy(data[:, 0]).long().to(device) # Shape (num_samples,)
    X = torch.from_numpy(data[:, 1:]).to(device) # Shape (num_samples, num_features)
 
+   X = X.view(-1, 1, 28, 28)  # Convert (num_samples, 784) -> (num_samples, 1, 28, 28)
+
    X = X / 255 # Normalize X
    return X, y
 
+def Objective(trial: optuna.Trial) -> float:
+   num_epochs = trial.suggest_categorical("num_epochs", [10, 20, 50, 100])
+   lr = trial.suggest_categorical("lr", [1e-1, 1e-2, 1e-3, 1e-4, 1e-5])
+   batch_size = trial.suggest_categorical('batch_size', [10, 32, 64, 128, 256])
+   num_dense_nodes = trial.suggest_categorical("num_dense_nodes", [16, 32, 64, 128])
+
+
+   # Initalize data
+   train_data = pd.read_csv('sign_mnist_train.csv')
+   test_data = pd.read_csv('sign_mnist_test.csv')
+   
+   device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+   train_X, train_y = preprocess(train_data, device)
+   test_X, test_y = preprocess(test_data, device)
+
+   # Intialize model
+   model = ConvolutionalNeuralNetwork(num_classes=24, num_dense_nodes=num_dense_nodes).to(device)
+
+   # Train
+   model.train_model(train_X=train_X, train_y=train_y, num_epochs=num_epochs, lr=lr, batch_size=batch_size) 
+
+   # Test 
+   accuracy = model.test_model(test_X=test_X, test_y=test_y)
+
+   return accuracy
+
+
+
 if __name__ == "__main__":
 
-   pass
+   # Hyperparameter tuning
+   study = optuna.create_study(direction="maximize")  # Maximize accuracy
+   study.optimize(Objective, n_trials=50)
+
+   # Print best hyperparameters
+   print("Best hyperparameters:", study.best_params)
+
+   # # Initialize data
+   # train_data = pd.read_csv('sign_mnist_train.csv')
+   # test_data = pd.read_csv('sign_mnist_test.csv')
+   
+   # device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # Select use of GPU/CPU
+
+   # train_X, train_y = preprocess(train_data, device)
+   # test_X, test_y = preprocess(test_data, device)
+
+   # # Train and test model
+   # model = ConvolutionalNeuralNetwork(num_classes=24, num_dense_nodes=64).to(device)
+   # model.train_model(train_X=train_X, train_y=train_y, num_epochs=50, lr=1e-2, batch_size=64)
+   # model.test_model(test_X=test_X, test_y=test_y)
+
