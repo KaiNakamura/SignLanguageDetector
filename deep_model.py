@@ -88,7 +88,7 @@ def preprocess(data: pd.DataFrame, device: torch.device) -> tuple:
 
 def Objective(trial: optuna.Trial) -> float:
    num_epochs = trial.suggest_categorical("num_epochs", [10, 20, 50, 100])
-   lr = trial.suggest_categorical("lr", [1e-1, 1e-2, 1e-3, 1e-4, 1e-5])
+   lr = trial.suggest_categorical("lr", [1e-2, 1e-3, 1e-4, 1e-5])
    batch_size = trial.suggest_categorical('batch_size', [10, 32, 64, 128, 256])
    num_dense_nodes = trial.suggest_categorical("num_dense_nodes", [16, 32, 64, 128])
 
@@ -124,17 +124,21 @@ if __name__ == "__main__":
    # Print best hyperparameters
    print("Best hyperparameters:", study.best_params)
 
-   # # Initialize data
-   # train_data = pd.read_csv('sign_mnist_train.csv')
-   # test_data = pd.read_csv('sign_mnist_test.csv')
+   # Best is trial 17 with value: 0.9523145566090352.
+   # Best hyperparameters: {'num_epochs': 50, 'lr': 0.01, 'batch_size': 10, 'num_dense_nodes': 64}
+
+
+   # Initialize data
+   train_data = pd.read_csv('sign_mnist_train.csv')
+   test_data = pd.read_csv('sign_mnist_test.csv')
    
-   # device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # Select use of GPU/CPU
+   device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # Select use of GPU/CPU
 
-   # train_X, train_y = preprocess(train_data, device)
-   # test_X, test_y = preprocess(test_data, device)
+   train_X, train_y = preprocess(train_data, device)
+   test_X, test_y = preprocess(test_data, device)
 
-   # # Train and test model
-   # model = ConvolutionalNeuralNetwork(num_classes=24, num_dense_nodes=64).to(device)
-   # model.train_model(train_X=train_X, train_y=train_y, num_epochs=50, lr=1e-2, batch_size=64)
-   # model.test_model(test_X=test_X, test_y=test_y)
+   # Train and test model
+   model = ConvolutionalNeuralNetwork(num_classes=24, num_dense_nodes=64).to(device)
+   model.train_model(train_X=train_X, train_y=train_y, num_epochs=50, lr=1e-2, batch_size=10)
+   model.test_model(test_X=test_X, test_y=test_y)
 
