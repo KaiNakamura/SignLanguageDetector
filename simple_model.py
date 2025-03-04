@@ -20,7 +20,7 @@ class SoftmaxClassifer(nn.Module):
       return self.linear(x)
 
 
-   def train_model (self, train_X: np.ndarray, train_y: np.ndarray, num_epochs: int, lr: float, batch_size: int): 
+   def train_model (self, train_X: Tensor, train_y: Tensor, num_epochs: int, lr: float, batch_size: int): 
       dataset = TensorDataset(train_X, train_y)
       loader = DataLoader(dataset=dataset, batch_size=batch_size, shuffle=True)
 
@@ -39,7 +39,7 @@ class SoftmaxClassifer(nn.Module):
             print(f"Epoch {epoch} / {num_epochs}: {loss.item()}")
    
 
-   def test_model (self, test_X: np.ndarray, test_y: np.ndarray) -> float:
+   def test_model (self, test_X: Tensor, test_y: Tensor) -> float:
       with torch.no_grad():
          n = test_y.shape[0]
 
@@ -104,7 +104,7 @@ if __name__ == "__main__":
    print("Best hyperparameters:", study.best_params)
 
 
-   # Best hyperparameters: {'num_epochs': 100, 'lr': 0.1, 'batch_size': 64}
+   # Best hyperparameters: {'num_epochs': 100, 'lr': 0.01, 'batch_size': 10}
 
    # # Initalize data
    train_data = pd.read_csv('sign_mnist_train.csv')
