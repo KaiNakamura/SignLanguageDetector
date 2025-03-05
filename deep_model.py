@@ -132,12 +132,12 @@ def Objective(trial: optuna.Trial) -> float:
 
 if __name__ == "__main__":
 
-    # Hyperparameter tuning
-    study = optuna.create_study(direction="maximize")  # Maximize accuracy
-    study.optimize(Objective, n_trials=50)
+    # # Hyperparameter tuning
+    # study = optuna.create_study(direction="maximize")  # Maximize accuracy
+    # study.optimize(Objective, n_trials=50)
 
-    # Print best hyperparameters
-    print("Best hyperparameters:", study.best_params)
+    # # Print best hyperparameters
+    # print("Best hyperparameters:", study.best_params)
 
     # Best is trial 17 with value: 0.9523145566090352.
     # Best hyperparameters: {'num_epochs': 50, 'lr': 0.01, 'batch_size': 10, 'num_dense_nodes': 64}
@@ -148,7 +148,7 @@ if __name__ == "__main__":
 
     device = torch.device(
         "cuda" if torch.cuda.is_available() else "cpu"
-    )  # Select use of GPU/CPU
+        )  # Select use of GPU/CPU
 
     train_X, train_y = preprocess(train_data, device)
     test_X, test_y = preprocess(test_data, device)
@@ -159,3 +159,5 @@ if __name__ == "__main__":
         train_X=train_X, train_y=train_y, num_epochs=50, lr=1e-2, batch_size=10
     )
     model.test_model(test_X=test_X, test_y=test_y)
+
+    torch.save(model.state_dict(), "asl_model.pth")
