@@ -51,46 +51,49 @@ with mp_hands.Hands(min_detection_confidence=0.5, min_tracking_confidence=0.5) a
 
         if results.multi_hand_landmarks:
             for hand_landmarks in results.multi_hand_landmarks:
-                # Get hand bounding box
-                x_min = w
-                y_min = h
-                x_max = 0
-                y_max = 0
+                # draw a square box around each hand
+                x_min, y_min = 1000, 1000
+                x_max, y_max = 0, 0
 
                 for lm in hand_landmarks.landmark:
-                    x, y = int(lm.x * w), int(lm.y * h)
-                    x_min = min(x_min, x)
-                    y_min = min(y_min, y)
-                    x_max = max(x_max, x)
-                    y_max = max(y_max, y)
+                    x, y = int(lm.x * frame.shape[1]), int(lm.y * frame.shape[0])
+                    if x < x_min:
+                        x_min = x
+                    if x > x_max:
+                        x_max = x
+                    if y < y_min:
+                        y_min = y
+                    if y > y_max:
+                        y_max = y
 
-                # Expand bounding box slightly
+                # Calculate the center and size of the square
                 box_size = max(x_max - x_min, y_max - y_min)
-                x_min = max(x_min - box_size // 4, 0)
-                y_min = max(y_min - box_size // 4, 0)
-                x_max = min(x_max + box_size // 4, w)
-                y_max = min(y_max + box_size // 4, h)
+                center_x, center_y = (x_min + x_max) // 2, (y_min + y_max) // 2
+                
+                # Calculate new square coordinates
+                x_min = center_x - box_size // 2
+                x_max = center_x + box_size // 2
+                y_min = center_y - box_size // 2
+                y_max = center_y + box_size // 2
 
-                # Extract hand region
-                hand_region = frame[y_min:y_max, x_min:x_max]
-
-                # Resize to 56x56 first, then downsample to 28x28
-                resized_hand = cv2.resize(hand_region, (28, 28))
-
-                # Convert to PIL Image for PyTorch processing
-                resized_hand_pil = Image.fromarray(resized_hand)
-
-                # Apply transformation
-                tensor_hand = transform(resized_hand_pil).unsqueeze(0).to(device)  # Add batch dimension
-
-                # Predict
+                cropped_hand = frame[y_min:y_max, x_min:x_max]
+                
+                if cropped_hand.shape[0] == 0 or cropped_hand.shape[1] == 0:
+                    continue
+                
+                resized_hand = cv2.resize(cropped_hand, (28, 28))
+                
+                # Convert to PIL Image
+                img = Image.fromarray(resized_hand).convert('L')
+                img = transform(img)
+                img = img.unsqueeze(0).to(device)
+                
+                # Make prediction
                 with torch.no_grad():
-                    output = model(tensor_hand)
-                    predicted_class = torch.argmax(output, dim=1).item()
-
-                    predicted_letter = asl_classes.get(predicted_class, "?")  # Get letter, default to '?'
-
-
+                    output = model(img)
+                    predicted_letter = asl_classes[torch.argmax(output).item()]
+                    
+                
                 # Display prediction
                 cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), (0, 255, 0), 2)
                 cv2.putText(frame, f"Predicted: {predicted_letter}", (x_min, y_min - 10),
