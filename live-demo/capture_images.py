@@ -44,7 +44,7 @@ classes = [
     "X",
     "Y",
 ]
-dataset_size = 100
+dataset_size = 500
 
 DATA_DIR = f"data/custom_recording_{dataset_size}"
 if not os.path.exists(DATA_DIR):
