@@ -91,6 +91,10 @@ def preprocess(data: pd.DataFrame, device: torch.device) -> tuple:
 
     X = X.view(-1, 1, 28, 28)  # Convert (num_samples, 784) -> (num_samples, 1, 28, 28)
 
+    # flip half the images from left to right
+    X = torch.cat((X, torch.flip(X, [3])), 0)
+    y = torch.cat((y, y), 0)
+
     X = X / 255  # Normalize X
     return X, y
 
@@ -160,4 +164,4 @@ if __name__ == "__main__":
     )
     model.test_model(test_X=test_X, test_y=test_y)
 
-    torch.save(model.state_dict(), "asl_model.pth")
+    torch.save(model.state_dict(), "asl_model_lr_flip.pth")
