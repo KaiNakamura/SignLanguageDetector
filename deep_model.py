@@ -13,19 +13,15 @@ class ConvolutionalNeuralNetwork(nn.Module):
     def __init__(self, num_classes: int, num_dense_nodes: int):
         super(ConvolutionalNeuralNetwork, self).__init__()
         self.conv_layer = nn.Sequential(
-            nn.Conv2d(
-                in_channels=1, out_channels=16, kernel_size=3, stride=1, padding=1
-            ),
+            nn.Conv2d(in_channels=1, out_channels=16, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Conv2d(
-                in_channels=16, out_channels=32, kernel_size=3, stride=1, padding=1
-            ),
+
+            nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Conv2d(
-                in_channels=32, out_channels=64, kernel_size=3, stride=1, padding=1
-            ),
+            
+            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2),
         )
@@ -91,6 +87,10 @@ def preprocess(data: pd.DataFrame, device: torch.device) -> tuple:
 
     X = X.view(-1, 1, 28, 28)  # Convert (num_samples, 784) -> (num_samples, 1, 28, 28)
 
+    # flip half the images from left to right
+    X = torch.cat((X, torch.flip(X, [3])), 0)
+    y = torch.cat((y, y), 0)
+
     X = X / 255  # Normalize X
     return X, y
 
@@ -132,12 +132,12 @@ def Objective(trial: optuna.Trial) -> float:
 
 if __name__ == "__main__":
 
-    # Hyperparameter tuning
-    study = optuna.create_study(direction="maximize")  # Maximize accuracy
-    study.optimize(Objective, n_trials=50)
+    # # Hyperparameter tuning
+    # study = optuna.create_study(direction="maximize")  # Maximize accuracy
+    # study.optimize(Objective, n_trials=50)
 
-    # Print best hyperparameters
-    print("Best hyperparameters:", study.best_params)
+    # # Print best hyperparameters
+    # print("Best hyperparameters:", study.best_params)
 
     # Best is trial 17 with value: 0.9523145566090352.
     # Best hyperparameters: {'num_epochs': 50, 'lr': 0.01, 'batch_size': 10, 'num_dense_nodes': 64}
@@ -148,7 +148,7 @@ if __name__ == "__main__":
 
     device = torch.device(
         "cuda" if torch.cuda.is_available() else "cpu"
-    )  # Select use of GPU/CPU
+        )  # Select use of GPU/CPU
 
     train_X, train_y = preprocess(train_data, device)
     test_X, test_y = preprocess(test_data, device)
@@ -159,3 +159,5 @@ if __name__ == "__main__":
         train_X=train_X, train_y=train_y, num_epochs=50, lr=1e-2, batch_size=10
     )
     model.test_model(test_X=test_X, test_y=test_y)
+
+    torch.save(model.state_dict(), "asl_model_lr_flip.pth")
