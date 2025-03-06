@@ -19,34 +19,13 @@ def draw_text(
 
 # No J or Z since they require gestures to properly sign
 classes = [
-    "A",
-    "B",
-    "C",
-    "D",
-    "E",
-    "F",
-    "G",
-    "H",
-    "I",
-    "K",
-    "L",
-    "M",
-    "N",
-    "O",
-    "P",
-    "Q",
     "R",
-    "S",
-    "T",
     "U",
     "V",
-    "W",
-    "X",
-    "Y",
 ]
-dataset_size = 500
+dataset_size = 3000
 
-DATA_DIR = f"data/custom_recording_{dataset_size}"
+DATA_DIR = f"data/custom_recording_RUV_{dataset_size}"
 if not os.path.exists(DATA_DIR):
     os.makedirs(DATA_DIR)
 

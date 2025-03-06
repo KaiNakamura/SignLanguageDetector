@@ -5,7 +5,7 @@ import random
 from image_processor import process_image
 from datetime import datetime
 
-DATA_DIR = "data/custom_recording_500"
+DATA_DIR = "data/custom_recording_RUV_3000"
 
 data = []
 labels = []
