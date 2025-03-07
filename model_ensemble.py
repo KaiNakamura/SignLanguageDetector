@@ -33,26 +33,52 @@ if __name__ == "__main__":
    # Train KNN
    knn = KNeighborsClassifier(n_neighbors=5)
    knn.fit(train_X, train_y)
-   knn_pred = knn.predict(test_X)
-   knn_proba = knn.predict_proba(test_X)  
-   knn_accuracy = accuracy_score(test_y, knn_pred)
-   knn_loss = log_loss(test_y, knn_proba)
-   print(f"KNN Test Accuracy: {knn_accuracy}, Log Loss: {knn_loss}")
+   
+   # Predictions
+   knn_train_pred = knn.predict(train_X)
+   knn_train_proba = knn.predict_proba(train_X)
+   knn_test_pred = knn.predict(test_X)
+   knn_test_proba = knn.predict_proba(test_X)
+
+   # Accuracy and Log Loss
+   knn_train_accuracy = accuracy_score(train_y, knn_train_pred)
+   knn_train_loss = log_loss(train_y, knn_train_proba)
+   knn_test_accuracy = accuracy_score(test_y, knn_test_pred)
+   knn_test_loss = log_loss(test_y, knn_test_proba)
+
+   print(f"KNN Train Accuracy: {knn_train_accuracy}, Log Loss: {knn_train_loss}")
+   print(f"KNN Test Accuracy: {knn_test_accuracy}, Log Loss: {knn_test_loss}")
 
    # Train Random Forest
    rf = RandomForestClassifier(n_estimators=100, random_state=100)
    rf.fit(train_X, train_y)
-   rf_pred = rf.predict(test_X)
-   rf_proba = rf.predict_proba(test_X)
-   rf_accuracy = accuracy_score(test_y, rf_pred)
-   rf_loss = log_loss(test_y, rf_proba)
-   print(f"Random Forest Test Accuracy: {rf_accuracy}, Log Loss: {rf_loss}")
 
-   # Train logistic regression
+   rf_train_pred = rf.predict(train_X)
+   rf_train_proba = rf.predict_proba(train_X)
+   rf_test_pred = rf.predict(test_X)
+   rf_test_proba = rf.predict_proba(test_X)
+
+   rf_train_accuracy = accuracy_score(train_y, rf_train_pred)
+   rf_train_loss = log_loss(train_y, rf_train_proba)
+   rf_test_accuracy = accuracy_score(test_y, rf_test_pred)
+   rf_test_loss = log_loss(test_y, rf_test_proba)
+
+   print(f"Random Forest Train Accuracy: {rf_train_accuracy}, Log Loss: {rf_train_loss}")
+   print(f"Random Forest Test Accuracy: {rf_test_accuracy}, Log Loss: {rf_test_loss}")
+
+   # Train Logistic Regression
    clf = OneVsRestClassifier(LogisticRegression(max_iter=500, solver="lbfgs"))
    clf.fit(train_X, train_y)
-   pred_y = clf.predict(test_X)
-   pred_proba = clf.predict_proba(test_X)
-   accuracy = accuracy_score(test_y, pred_y)
-   loss = log_loss(test_y, pred_proba)
-   print(f"Logistic Regression Test Accuracy: {accuracy}, Log Loss: {loss}")
+
+   pred_train_y = clf.predict(train_X)
+   pred_train_proba = clf.predict_proba(train_X)
+   pred_test_y = clf.predict(test_X)
+   pred_test_proba = clf.predict_proba(test_X)
+
+   train_accuracy = accuracy_score(train_y, pred_train_y)
+   train_loss = log_loss(train_y, pred_train_proba)
+   test_accuracy = accuracy_score(test_y, pred_test_y)
+   test_loss = log_loss(test_y, pred_test_proba)
+
+   print(f"Logistic Regression Train Accuracy: {train_accuracy}, Log Loss: {train_loss}")
+   print(f"Logistic Regression Test Accuracy: {test_accuracy}, Log Loss: {test_loss}")
