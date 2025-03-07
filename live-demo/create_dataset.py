@@ -3,8 +3,9 @@ import pickle
 import cv2
 import random
 from image_processor import process_image
+from datetime import datetime
 
-DATA_DIR = "data/custom_recording_100"
+DATA_DIR = "data/custom_recording_RUV_3000"
 
 data = []
 labels = []
@@ -34,6 +35,9 @@ for dir in os.listdir(DATA_DIR):
 print("Finished processing all images!")
 
 # Save the data and labels to a pickle file
-f = open("data/landmark_data.pickle", "wb")
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+filename = f"data/landmark_data/{timestamp}.pickle"
+os.makedirs(os.path.dirname(filename), exist_ok=True)
+f = open(filename, "wb")
 pickle.dump({"data": data, "labels": labels}, f)
 f.close()
