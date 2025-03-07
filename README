@@ -1,0 +1,20 @@
+For this project we developed multiple models:
+- Model emsemble -> to test SciKit Learn simple models on dataset
+  - python model_ensemble.py
+
+- Simple model -> a 3 layer simple neural network
+  - python simple_model.py
+
+- Deep model -> convolutional neural network 
+  - python deep_model.py
+
+You can use the deep model to predict the ASL letter you are signing by running the cv-deep-model.py file: python cv-deep-model.py
+
+Saved models can be used in this CV funcionality by specifying the model of choice.
+- asl_model.pth -> just the trained deep model
+- asl_model_lr_flip.pth -> flips half of initial data so this model is better at detecting both hands
+
+The opencv-hand-tracking folder simply demos the MediaPipe hand tracking.
+The live-demo folder will allow you to create your own dataset of images and train a much more accurate model for yourself.
+This time you will use a random forest classification model trained on your images to predict ASL letters via webcam.
+This demo will use one of the saved models from the models folder.
