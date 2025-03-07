@@ -17,14 +17,7 @@ class SoftmaxClassifer(nn.Module):
    def forward(self, x: Tensor) -> Tensor:
       return self.linear(x)
 
-   def train_model(
-      self,
-      train_X: Tensor,
-      train_y: Tensor,
-      num_epochs: int,
-      lr: float,
-      batch_size: int,
-   ):
+   def train_model(self, train_X: Tensor, train_y: Tensor, num_epochs: int, lr: float, batch_size: int):
       dataset = TensorDataset(train_X, train_y)
       loader = DataLoader(dataset=dataset, batch_size=batch_size, shuffle=True)
 
@@ -42,7 +35,7 @@ class SoftmaxClassifer(nn.Module):
          if epoch % 10 == 0:
                print(f"Epoch {epoch} / {num_epochs}: {loss.item()}")
 
-   def test_model(self, test_X: Tensor, test_y: Tensor) -> tuple:
+   def test_model(self, test_X: Tensor, test_y: Tensor, which: str) -> tuple:
       with torch.no_grad():
          n = test_y.shape[0]
          loss_fn = nn.CrossEntropyLoss()  # CE loss runs softmax function
@@ -53,8 +46,8 @@ class SoftmaxClassifer(nn.Module):
          predicted_classes = torch.argmax(probabilities, dim=1)
 
          accuracy = (test_y == predicted_classes).sum().item() / n
-         print(f"Test accuracy: {accuracy}")
-         print(f"Test loss: {loss}")
+         print(f"{which} accuracy: {accuracy}")
+         print(f"{which} loss: {loss}")
          return accuracy, loss
 
 
@@ -91,16 +84,10 @@ def Objective(trial: optuna.Trial) -> float:
    model = SoftmaxClassifer(features=784, num_classes=24).to(device)
 
    # Train
-   model.train_model(
-      train_X=train_X,
-      train_y=train_y,
-      num_epochs=num_epochs,
-      lr=lr,
-      batch_size=batch_size,
-   )
+   model.train_model(train_X=train_X, train_y=train_y, num_epochs=num_epochs, lr=lr, batch_size=batch_size)
 
    # Test
-   accuracy, loss = model.test_model(test_X=test_X, test_y=test_y)
+   accuracy, loss = model.test_model(test_X=test_X, test_y=test_y, which="Test")
 
    return accuracy
 
@@ -131,9 +118,10 @@ if __name__ == "__main__":
    model = SoftmaxClassifer(features=784, num_classes=24).to(device)
 
    # Train
-   model.train_model(
-      train_X=train_X, train_y=train_y, num_epochs=100, lr=0.01, batch_size=10
-   )
+   model.train_model(train_X=train_X, train_y=train_y, num_epochs=100, lr=0.01, batch_size=10)
+
+   # Training Metrics
+   accuracy, loss = model.test_model(test_X=train_X, test_y=train_y, which="Train")
 
    # Test
-   accuracy, loss = model.test_model(test_X=test_X, test_y=test_y)
+   accuracy, loss = model.test_model(test_X=test_X, test_y=test_y, which="Test")

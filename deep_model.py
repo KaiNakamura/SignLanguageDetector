@@ -36,14 +36,7 @@ class ConvolutionalNeuralNetwork(nn.Module):
         X = torch.flatten(X, start_dim=1)
         return self.dense_layer(X)
 
-    def train_model(
-        self,
-        train_X: Tensor,
-        train_y: Tensor,
-        num_epochs: int,
-        lr: float,
-        batch_size: int,
-    ):
+    def train_model(self, train_X: Tensor, train_y: Tensor, num_epochs: int, lr: float, batch_size: int):
         dataset = TensorDataset(train_X, train_y)
         loader = DataLoader(dataset=dataset, batch_size=batch_size, shuffle=True)
 
@@ -61,17 +54,20 @@ class ConvolutionalNeuralNetwork(nn.Module):
             if epoch % 10 == 0:
                 print(f"Epoch {epoch} / {num_epochs}: {loss.item()}")
 
-    def test_model(self, test_X: Tensor, test_y: Tensor) -> float:
+    def test_model(self, test_X: Tensor, test_y: Tensor, which: str) -> tuple:
         with torch.no_grad():
             n = test_y.shape[0]
+            loss_fn = nn.CrossEntropyLoss()  # CE loss runs softmax function
 
             logits = self.forward(test_X)
             probabilities = torch.softmax(logits, dim=1)
+            loss = loss_fn(logits, test_y)
             predicted_classes = torch.argmax(probabilities, dim=1)
 
             accuracy = (test_y == predicted_classes).sum().item() / n
-            print(f"Test accuracy: {accuracy}")
-            return accuracy
+            print(f"{which} accuracy: {accuracy}")
+            print(f"{which} loss: {loss}")
+            return accuracy, loss
 
 
 def preprocess(data: pd.DataFrame, device: torch.device) -> tuple:
@@ -111,21 +107,13 @@ def Objective(trial: optuna.Trial) -> float:
     test_X, test_y = preprocess(test_data, device)
 
     # Intialize model
-    model = ConvolutionalNeuralNetwork(
-        num_classes=24, num_dense_nodes=num_dense_nodes
-    ).to(device)
+    model = ConvolutionalNeuralNetwork(num_classes=24, num_dense_nodes=num_dense_nodes).to(device)
 
     # Train
-    model.train_model(
-        train_X=train_X,
-        train_y=train_y,
-        num_epochs=num_epochs,
-        lr=lr,
-        batch_size=batch_size,
-    )
+    model.train_model(train_X=train_X, train_y=train_y, num_epochs=num_epochs, lr=lr, batch_size=batch_size,)
 
     # Test
-    accuracy = model.test_model(test_X=test_X, test_y=test_y)
+    accuracy, loss = model.test_model(test_X=test_X, test_y=test_y, which="Test")
 
     return accuracy
 
@@ -146,18 +134,19 @@ if __name__ == "__main__":
     train_data = pd.read_csv("data/sign_mnist_train.csv")
     test_data = pd.read_csv("data/sign_mnist_test.csv")
 
-    device = torch.device(
-        "cuda" if torch.cuda.is_available() else "cpu"
-        )  # Select use of GPU/CPU
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # Select use of GPU/CPU
 
     train_X, train_y = preprocess(train_data, device)
     test_X, test_y = preprocess(test_data, device)
 
-    # Train and test model
+    # Train
     model = ConvolutionalNeuralNetwork(num_classes=24, num_dense_nodes=64).to(device)
-    model.train_model(
-        train_X=train_X, train_y=train_y, num_epochs=50, lr=1e-2, batch_size=10
-    )
-    model.test_model(test_X=test_X, test_y=test_y)
+    model.train_model(train_X=train_X, train_y=train_y, num_epochs=50, lr=1e-2, batch_size=10)
+    
+    # Train Metrics
+    model.test_model(test_X=train_X, test_y=train_y, which="Train")
+
+    # Test Metrics
+    model.test_model(test_X=test_X, test_y=test_y, which="Test")
 
     torch.save(model.state_dict(), "asl_model_lr_flip.pth")
